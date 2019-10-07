@@ -1,0 +1,7 @@
+"UnlitGeneric"
+{
+	"$basetexture" "vgui/entities/sent_vj_nz_randspawner"
+	"$nolod" 1
+	"$vertexalpha" 1
+	"$vertexcolor" 1
+}
