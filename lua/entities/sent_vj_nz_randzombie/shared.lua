@@ -1,6 +1,6 @@
 ENT.Base 			= "obj_vj_spawner_base"
 ENT.Type 			= "anim"
-ENT.PrintName 		= "Random Nazi Zombie"
+ENT.PrintName 		= "Random Zombie"
 ENT.Author 			= "Cpt. Hazama"
 ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 ENT.Purpose 		= "Spawn it and fight with it!"

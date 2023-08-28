@@ -1,0 +1,7 @@
+"VertexLitGeneric"
+{
+    "$basetexture"				"models/cpthazama/nz_zombie/zombie_eye"
+	"$bumpmap"					"vj_base/flat"
+	"$phongexponenttexture"		"vj_base/exponent"
+	"$selfillum"					"1"
+}

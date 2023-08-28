@@ -5,8 +5,8 @@
 	without the prior written consent of the author, unless otherwise indicated for stand-alone materials.
 --------------------------------------------------*/
 ------------------ Addon Information ------------------
-local PublicAddonName = "Nazi Zombie SNPCs"
-local AddonName = "Nazi Zombie"
+local PublicAddonName = "CoD Zombie SNPCs"
+local AddonName = "CoD Zombies"
 local AddonType = "SNPC"
 local AutorunFile = "autorun/vj_nz_autorun.lua"
 -------------------------------------------------------
@@ -14,27 +14,56 @@ local VJExists = file.Exists("lua/autorun/vj_base_autorun.lua","GAME")
 if VJExists == true then
 	include('autorun/vj_controls.lua')
 
-	local vCat = "Nazi Zombies"
-	VJ.AddNPC("Nazi Zombie","npc_vj_nz_zombie",vCat)
-	VJ.AddNPC("(Walking) Nazi Zombie","npc_vj_nz_zombiewalk",vCat)
-	VJ.AddNPC("(Running) Nazi Zombie","npc_vj_nz_zombierun",vCat)
-	-- VJ.AddNPC("(Crawling) Nazi Zombie","npc_vj_nz_zombiecrawl",vCat) // Crawler has no ragdoll
+	local vCat = "CoD Zombies"
+	VJ.AddNPC("Zombie","npc_vj_nz_zombie",vCat)
+	VJ.AddNPC("(Walking) Zombie","npc_vj_nz_zombiewalk",vCat)
+	VJ.AddNPC("(Running) Zombie","npc_vj_nz_zombierun",vCat)
 	-- VJ.AddNPC("Nova Crawler","npc_vj_nz_novacrawler",vCat)
 	VJ.AddNPC("Hell Hound","npc_vj_nz_hound",vCat)
-	VJ.AddNPC("Random Nazi Zombie","sent_vj_nz_randzombie",vCat)
-	VJ.AddNPC("Nazi Zombie Spawner","sent_vj_nz_spawnzombie",vCat)
+	VJ.AddNPC("Random Zombie","sent_vj_nz_randzombie",vCat)
+	VJ.AddNPC("Zombie Spawner","sent_vj_nz_spawnzombie",vCat)
 	VJ.AddNPC("Random Zombie Spawner","sent_vj_nz_randspawner",vCat)
-	VJ.AddNPC("(Spawner) Zombie Onslaught","sent_vj_nz_onslaught",vCat)
-	VJ.AddNPC("(Spawner) Zombie Waves","sent_vj_nz_wavespawn",vCat) -- Not ready yet
-	VJ.AddNPC("Nazi Zombie Soldier","npc_vj_nz_newzombie",vCat)
+	VJ.AddNPC("(Auto-Spawner) Onslaught","sent_vj_nz_mutator",vCat)
 
-	-- VJ.AddNPC("(HAMMER) Nazi Zombie","sent_vj_nz_mapspawn",vCat)
-	-- VJ.AddNPC("(HAMMER) (Walking) Nazi Zombie","sent_vj_nz_mapspawn_walk",vCat)
-	-- VJ.AddNPC("(HAMMER) (Running) Nazi Zombie","sent_vj_nz_mapspawn_run",vCat)
+	VJ_nz_NodegraphExists = VJ_NZ_NodegraphExists or false
+	hook.Add("Initialize","VJ_NZ_Initialize",function()
+		timer.Simple(3,function()
+			local graph = VJ_Nodegraph
+			if graph then
+				VJ_NZ_NodegraphExists = true
+			end
+		end)
+	end)
+
+	hook.Add("ShouldCollide","VJ_NZCollision",function(ent1,ent2)
+		if ent1.VJ_NZ_Zombie and ent2.VJ_NZ_Zombie then return false end
+	end)
+
+	if SERVER then
+		util.AddNetworkString("NZ_CSound")
+
+		function NZ_CSound(ent,snd)
+			net.Start("NZ_CSound")
+				net.WriteString(snd)
+				net.WriteEntity(ent)
+			net.Send(ent)
+		end
+	else
+		net.Receive("NZ_CSound",function(len,pl)
+			local sound = net.ReadString()
+			local ent = net.ReadEntity()
+
+			ent:EmitSound(sound,0)
+			print("Playing sound " .. sound .. " on " .. ent:Nick())
+		end)
+	end
+
+	VJ.AddConVar("vj_nz_mutator_sndtrk",0,{FCVAR_ARCHIVE},"Play the soundtrack when the mutator is active.")
+	VJ.AddConVar("vj_nz_mutator_allowbots",0,{FCVAR_ARCHIVE},"Spawns bots with the mutator.")
+	VJ.AddConVar("vj_nz_mutator_maxbots",0,{FCVAR_ARCHIVE},"Max bots to spawn with the mutator. (0 = Auto-Balance)")
 	
 	local AddConvars = {}
-	AddConvars["vj_nzeyecolor"] = 1
-	AddConvars["vj_nzwavetype"] = 1
+	AddConvars["vj_nz_eyecolor"] = 1
 	for k, v in pairs(AddConvars) do
 		if !ConVarExists( k ) then CreateConVar( k, v, {FCVAR_ARCHIVE} ) end
 	end
@@ -45,45 +74,43 @@ if VJExists == true then
 		if !LocalPlayer():IsAdmin() or !LocalPlayer():IsSuperAdmin() then
 			Panel:AddControl( "Label", {Text = "You are not an admin!"})
 			Panel:ControlHelp("Notice: Only admins can change this settings")
+			local vj_nzreset = {Options = {}, CVars = {}, Label = "Reset Everything:", MenuButton = "0"}
+			vj_nzreset.Options["#vjbase.menugeneral.default"] = { 
+				vj_nz_mutator_sndtrk = "0",
+			}
+			Panel:AddControl("Checkbox", {Label = "[Auto-Spawner] Enabled Background Music", Command = "vj_nz_mutator_sndtrk"})
 			return
 			end
 		end
 		Panel:AddControl( "Label", {Text = "Notice: Only admins can change this settings."})
 		local vj_nzreset = {Options = {}, CVars = {}, Label = "Reset Everything:", MenuButton = "0"}
 		vj_nzreset.Options["#vjbase.menugeneral.default"] = { 
-		vj_nzeyecolor = "1",
-		vj_nzwavetype = "1"
+			vj_nz_eyecolor = "1",
+			vj_nz_mutator_sndtrk = "0",
+			vj_nz_mutator_allowbots = "0",
+			vj_nz_mutator_maxbots = "0",
 		}
 		Panel:AddControl("ComboBox", vj_nzreset)
-		local vj_nzeyecolortable = {Options = {}, CVars = {}, Label = "Zombie Eye Color:", MenuButton = "0"}
-		vj_nzeyecolortable.Options["#Orange"] = {
-			vj_nzeyecolor = "1"
+		local vj_nz_eyecolortable = {Options = {}, CVars = {}, Label = "Zombie Eye Color:", MenuButton = "0"}
+		vj_nz_eyecolortable.Options["#Orange"] = {
+			vj_nz_eyecolor = "1"
 		}
-		vj_nzeyecolortable.Options["#Red"] = {
-			vj_nzeyecolor = "2"
+		vj_nz_eyecolortable.Options["#Red"] = {
+			vj_nz_eyecolor = "2"
 		}
-		vj_nzeyecolortable.Options["#Blue"] = {
-			vj_nzeyecolor = "3"
+		vj_nz_eyecolortable.Options["#Blue"] = {
+			vj_nz_eyecolor = "3"
 		}
-		vj_nzeyecolortable.Options["#Green"] = {
-			vj_nzeyecolor = "4"
+		vj_nz_eyecolortable.Options["#Green"] = {
+			vj_nz_eyecolor = "4"
 		}
-		Panel:AddControl("ComboBox", vj_nzeyecolortable)
-		local vj_nzwavetable = {Options = {}, CVars = {}, Label = "Zombie Behavior:", MenuButton = "0"}
-		vj_nzwavetable.Options["#Walk to Run"] = {
-			vj_nzwavetype = "1"
-		}
-		vj_nzwavetable.Options["#Run to Sprint"] = {
-			vj_nzwavetype = "2"
-		}
-		vj_nzwavetable.Options["#Always Sprint"] = {
-			vj_nzwavetype = "3"
-		}
-		Panel:AddControl("ComboBox", vj_nzwavetable)
-		Panel:ControlHelp("This if for Nazi Zombies only! Not the walk or run variations.")
+		Panel:AddControl("ComboBox", vj_nz_eyecolortable)
+		Panel:AddControl("Checkbox", {Label = "[Auto-Spawner] Enable Background Music", Command = "vj_nz_mutator_sndtrk"})
+		Panel:AddControl("Checkbox", {Label = "[Auto-Spawner] Enable Player Bots", Command = "vj_nz_mutator_allowbots"})
+		Panel:AddControl("Slider", {Label = "[Auto-Spawner] Max Player Bots", min = 0, max = 16, Command = "vj_nz_mutator_maxbots"})
 	end
 	function VJ_ADDTOMENU_NZ()
-		spawnmenu.AddToolMenuOption( "DrVrej", "SNPC Configures", "Nazi Zombies", "Nazi Zombies", "", "", VJ_NZMENU_MAIN, {} )
+		spawnmenu.AddToolMenuOption( "DrVrej", "SNPC Configures", "Zombies", "Zombies", "", "", VJ_NZMENU_MAIN, {} )
 	end
 		hook.Add( "PopulateToolMenu", "VJ_ADDTOMENU_NZ", VJ_ADDTOMENU_NZ )
 	end

@@ -1,4 +1,0 @@
-VertexLitGeneric {
-	$basetexture models\boz\pent_zomb\c_ger_zombie_head1_c
-	$phong 1
-}

@@ -1,4 +1,0 @@
-VertexLitGeneric {
-	$basetexture models\boz\pent_zomb\_-gchar_gen_gib_decals
-	$phong 1
-}

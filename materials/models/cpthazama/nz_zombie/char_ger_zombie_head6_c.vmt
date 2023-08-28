@@ -1,0 +1,21 @@
+"VertexLitGeneric"
+{
+     "$basetexture"                "models/cpthazama/nz_zombie/char_ger_zombie_head3_c"
+	"$bumpmap"			     "models/cpthazama/nz_zombie/char_ger_zombie_head1_n"
+	"$phongexponenttexture" 	     "vj_base/exponent"
+
+    "$nodecal" 					"1"
+	"$model"					"1"
+
+	"$phong"                      "1"
+	"$phongboost"                 "9.9934895"
+	"$phongfresnelranges"         "[0.05 0.115 0.945]"
+	"$phongdisablehalflambert"    "1"
+	"$phongalbedotint"            "1"
+	"$phongalbedoboost"           "6"
+
+	"$rimlight"                   "1"
+	"$rimlightexponent"           "100"
+	"$rimmask"                    "1"
+	"$rimlightboost"              "1"
+}
